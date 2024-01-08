@@ -1,0 +1,37 @@
+1xx - Informational:
+
+100 Continue: The server confirms that the client should continue with its request.
+
+101 Switching Protocols: The server will switch protocols according to the client's request.
+
+2xx - Success:
+
+200 OK: The request was successful.
+
+201 Created: The request was successful, and a new resource was created.
+
+204 No Content: The server successfully processed the request, but there is no content to send.
+
+3xx - Redirection:
+
+301 Moved Permanently: The requested resource has been permanently moved to a new location.
+
+302 Found (or 307 Temporary Redirect): The requested resource has been temporarily moved to another location.
+
+4xx - Client Error:
+
+400 Bad Request: The server cannot understand the request.
+
+401 Unauthorized: Authentication is required, and the client has not provided valid credentials.
+
+403 Forbidden: The client does not have permission to access the requested resource.
+
+404 Not Found: The requested resource could not be found on the server.
+
+422 Unprocessable Entity: The server understands the content type of the request entity but was unable to process the contained instructions.
+
+5xx - Server Error:
+
+500 Internal Server Error: A generic error message returned when the server encounters an unexpected condition.
+
+503 Service Unavailable: The server is not ready to handle the request. Common causes are a server that is down for maintenance or is overloaded.
