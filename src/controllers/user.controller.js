@@ -132,4 +132,66 @@ const logoutUser = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "User Logged out Successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    if (!(currentPassword || newPassword)) {
+        throw new ApiError(400, "All fields must be requried");
+    }
+
+    if (newPassword !== confirmNewPassword) {
+        throw new ApiError(401, "Password does not match ");
+    }
+
+    const user = await User.findById(req.user?._id);
+    const isPasswordCorrect = await user.isPasswordCorrect(currentPassword);
+
+    if (!isPasswordCorrect) {
+        throw new ApiError(401, "Password is incorrect");
+    }
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: true });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Password Changed Successfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(200, req.user, "Current user data fetched successfully");
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { name, email } = req.body;
+
+    if (!(name, email)) {
+        throw new ApiError(400, "Fileds are requried to update");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: { name: name, email: email },
+        },
+        { new: true }
+    ).select("-password");
+
+    if (!user) {
+        throw new ApiError(500, "Something wnet Wrong while updating the data");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Data has been updated successfully"));
+});
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+};
