@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import { uploadOnCloudinary } from "../utils/upload.cloudinary.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -240,6 +241,32 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file.path;
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "avatar file is missing");
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    if (!avatar.url) {
+        throw new ApiError(400, "Error while uploading avatar...");
+    }
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: { avatar: avatar.url },
+        },
+        {
+            new: true,
+        }
+    ).select("-password");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Avatar updates successfully..."));
+});
+
 export {
     registerUser,
     loginUser,
@@ -248,4 +275,5 @@ export {
     getCurrentUser,
     updateAccountDetails,
     refreshAccessToken,
+    updateUserAvatar,
 };
