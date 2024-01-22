@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -187,6 +188,58 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Data has been updated successfully"));
 });
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    const incomingRefreshToken =
+        req.cookies.refreshToken ||
+        req.header("Authentication")?.replace("Bearer ", "");
+
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request...");
+    }
+
+    const decodeToken = await jwt.verify(
+        incomingRefreshToken,
+        process.env.generateAccessTokenSecret
+    );
+
+    try {
+        const user = await User.findById(decodeToken._id);
+
+        if (!user) {
+            throw new ApiError(401, "invalid Token");
+        }
+
+        if (incomingRefreshToken !== user?.refreshToken) {
+            throw new ApiError(401, "Refresh Token is expired or used");
+        }
+
+        const { accessToken, newRefreshToken } =
+            await generateAccessAndRefreshToken(user._id);
+
+        const options = {
+            httpOnly: true,
+            secure: true,
+        };
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new ApiResponse(
+                    200,
+                    {
+                        refreshToken: newRefreshToken,
+                        accessToken,
+                    },
+                    "Access Token Refreshed"
+                )
+            );
+    } catch (error) {
+        throw new ApiError(401, error?.message || "invalid Refresh Token");
+    }
+});
+
 export {
     registerUser,
     loginUser,
@@ -194,4 +247,5 @@ export {
     changeCurrentPassword,
     getCurrentUser,
     updateAccountDetails,
+    refreshAccessToken,
 };
