@@ -2,25 +2,6 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-const userGameDataSchema = new mongoose.Schema({
-    rank: {
-        type: Number,
-        default: 0,
-    },
-    totalGames: {
-        type: Number,
-        default: 0,
-    },
-    gameWin: {
-        type: Number,
-        default: 0,
-    },
-    gamelost: {
-        type: Number,
-        default: 0,
-    },
-});
-
 const userSchema = new mongoose.Schema(
     {
         name: {
@@ -52,9 +33,6 @@ const userSchema = new mongoose.Schema(
         },
         avatar: {
             type: String, //cloudinary url
-        },
-        gameInfo: {
-            type: [userGameDataSchema],
         },
     },
     { timestamps: true }

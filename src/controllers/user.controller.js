@@ -44,7 +44,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const user = await User.create({
         name,
-        username: username.toLowerCase(),
+        username: username?.toLowerCase(),
         email,
         password,
     });
@@ -160,9 +160,12 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    return res
-        .status(200)
-        .json(200, req.user, "Current user data fetched successfully");
+    const getUser = await User.findById(req.user._id).select("-password");
+    if (!getUser) {
+        throw new ApiError(404, "User not found Unauthorized request...");
+    }
+
+    return res.status(200).json(new ApiResponse(200, getUser, "User Found"));
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
