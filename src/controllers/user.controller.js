@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { uploadOnCloudinary } from "../utils/upload.cloudinary.js";
+import { Player } from "../models/player.model.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -66,6 +67,18 @@ const registerUser = asyncHandler(async (req, res) => {
     const checkUserCreate = await User.findById(user._id).select(
         "-password -refreshToken"
     );
+    const createPlayer = await Player.create({ user: user._id });
+
+    if (!createPlayer) {
+        // throw new ApiError(500, "Something Went wrong while creating a user");
+        const getError = new ApiError(
+            401,
+            "Registration Error",
+            "Something Went wrong while creating a user"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
 
     if (!checkUserCreate) {
         // throw new ApiError(500, "Something Went wrong while creating a user");
@@ -84,7 +97,7 @@ const registerUser = asyncHandler(async (req, res) => {
             new ApiResponse(
                 201,
                 checkUserCreate,
-                "User has beens successfuly Created"
+                "User has been successfully Created"
             )
         );
 });
@@ -106,7 +119,6 @@ const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({
         $or: [{ username }, { email }],
     });
-
     if (!user) {
         // throw new ApiError(401, "User Not found ");
         const getError = new ApiError(401, "Login Error", "User not found");
@@ -372,6 +384,23 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Avatar updates successfully..."));
 });
 
+const getAllUsers = asyncHandler(async (req, res) => {
+    const users = await User.find({}).select("-password");
+    if (!users) {
+        // throw new ApiError(500, "Users Fetch Error", "Users not found");
+        const getError = new ApiError(
+            500,
+            "Users Fetch Error",
+            "Users not found"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
+    return res
+        .status(200)
+        .json(new ApiResponse(200, users, "All Users found successfully"));
+});
+
 export {
     registerUser,
     loginUser,
@@ -381,4 +410,5 @@ export {
     updateAccountDetails,
     refreshAccessToken,
     updateUserAvatar,
+    getAllUsers,
 };
