@@ -4,7 +4,6 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { uploadOnCloudinary } from "../utils/upload.cloudinary.js";
-import { Player } from "../models/player.model.js";
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -67,18 +66,6 @@ const registerUser = asyncHandler(async (req, res) => {
     const checkUserCreate = await User.findById(user._id).select(
         "-password -refreshToken"
     );
-    const createPlayer = await Player.create({ user: user._id });
-
-    if (!createPlayer) {
-        // throw new ApiError(500, "Something Went wrong while creating a user");
-        const getError = new ApiError(
-            401,
-            "Registration Error",
-            "Something Went wrong while creating a user"
-        );
-        getError.sendResponse(res);
-        throw getError;
-    }
 
     if (!checkUserCreate) {
         // throw new ApiError(500, "Something Went wrong while creating a user");
@@ -401,6 +388,8 @@ const getAllUsers = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, users, "All Users found successfully"));
 });
 
+const getGameStats = asyncHandler(async (req, res) => {});
+const updateGameStats = asyncHandler(async (req, res) => {});
 export {
     registerUser,
     loginUser,
@@ -411,4 +400,6 @@ export {
     refreshAccessToken,
     updateUserAvatar,
     getAllUsers,
+    getGameStats,
+    updateGameStats,
 };

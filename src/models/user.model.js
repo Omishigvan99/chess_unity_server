@@ -34,6 +34,20 @@ const userSchema = new mongoose.Schema(
         avatar: {
             type: String, //cloudinary url
         },
+        gameInfo: {
+            rank: {
+                type: Number,
+                default: 0,
+            },
+            games: {
+                type: String,
+                default: 0,
+            },
+            tournament: {
+                type: String,
+                default: 0,
+            },
+        },
     },
     { timestamps: true }
 );

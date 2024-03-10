@@ -30,4 +30,5 @@ router
     .patch(verifyJwt, upload.single("avatar"), updateUserAvatar);
 
 router.route("/get-users").get(getAllUsers);
+
 export default router;

@@ -2,7 +2,9 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { Tournament } from "../models/tournament.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import mongoose from "mongoose";
 
+// Controller to create a new tournament
 const createTournament = asyncHandler(async (req, res) => {
     const { name, type } = req.body;
     if (!(name && type)) {
@@ -15,12 +17,25 @@ const createTournament = asyncHandler(async (req, res) => {
         throw getError;
     }
 
-    const hostedBy = req.user._id;
+    const hostedBy = req.user?._id;
     if (!hostedBy) {
         const getError = new ApiError(
             401,
             "Tournament Registration Error",
             "Unauthorized access"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
+    // check if tournament already exists
+    const checkTournament = await Tournament.findOne({
+        $and: [{ name }, { type }],
+    });
+    if (checkTournament) {
+        const getError = new ApiError(
+            401,
+            "Tournament Registration Error",
+            "Tournament already exists"
         );
         getError.sendResponse(res);
         throw getError;
@@ -48,6 +63,7 @@ const createTournament = asyncHandler(async (req, res) => {
     );
 });
 
+// Controller to get a tournament by its ID
 const getTournamentById = asyncHandler(async (req, res) => {
     const { tournamentId } = req.params;
     const tournament = await Tournament.findById(tournamentId);
@@ -63,6 +79,7 @@ const getTournamentById = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Tournament found", tournament));
 });
 
+// Controller to delete a tournament by its ID
 const deleteTournament = asyncHandler(async (req, res) => {
     const { tournamentId } = req.params;
     const tournament = await Tournament.findByIdAndDelete(tournamentId);
@@ -80,8 +97,60 @@ const deleteTournament = asyncHandler(async (req, res) => {
     );
 });
 
+// Controller to get all tournaments
 const getAllTournaments = asyncHandler(async (req, res) => {
-    const tournaments = await Tournament.find({});
+    const userId = req.user._id;
+    if (!userId) {
+        const getError = new ApiError(
+            401,
+            "Tournament Fetch Error",
+            "Unauthorized access"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
+
+    // get all tournaments on the basis of user created tournaments,
+    // user registered tournaments,
+    // user played tournaments and all tournaments
+    const tournaments = await Tournament.aggregate([
+        {
+            $facet: {
+                userCreatedTournaments: [
+                    {
+                        $match: {
+                            hostedBy: userId,
+                        },
+                    },
+                ],
+                userRegisteredTournaments: [
+                    {
+                        $match: {
+                            players: userId,
+                        },
+                    },
+                ],
+                userPlayedTournaments: [
+                    {
+                        $match: {
+                            winner: userId,
+                        },
+                    },
+                ],
+                allTournaments: [
+                    {
+                        $project: {
+                            name: 1,
+                            type: 1,
+                            status: 1,
+                            winner: 1,
+                            players: 1,
+                        },
+                    },
+                ],
+            },
+        },
+    ]);
     if (!tournaments) {
         const getError = new ApiError(
             500,
@@ -96,6 +165,7 @@ const getAllTournaments = asyncHandler(async (req, res) => {
     );
 });
 
+// Controller to update a tournament
 const updateTournament = asyncHandler(async (req, res) => {
     const { tournamentId } = req.params;
     const tournament = await Tournament.findByIdAndUpdate(
@@ -122,11 +192,22 @@ const updateTournament = asyncHandler(async (req, res) => {
     );
 });
 
+// Controller to register a player to a tournament
 const registerPlayer = asyncHandler(async (req, res) => {
     const { tournamentId } = req.params;
-    const { playerId } = req.body;
-    
-    if (!(tournamentId && playerId)) {
+
+    if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+        const getError = new ApiError(
+            401,
+            "Invalid Tournament Id",
+            "Tournament Not Found"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
+    const getPlayer = req.user?._id;
+
+    if (!(tournamentId && getPlayer)) {
         const getError = new ApiError(
             401,
             "Tournament Registration Error",
@@ -136,21 +217,17 @@ const registerPlayer = asyncHandler(async (req, res) => {
         throw getError;
     }
 
-    if(!mongoose.Types.ObjectId.isValid(playerId)){
-        const getError = new ApiError(
-            401,
-            "Tournament Registration Error",
-            "Invalid player Id"
-        );
-        getError.sendResponse(res);
-        throw getError;
-    }
+    // check if player is already registered
+    const checkPlayer = await Tournament.findOne({
+        _id: tournamentId,
+        players: getPlayer,
+    });
 
-    if(!mongoose.Types.ObjectId.isValid(tournamentId)){
+    if (checkPlayer) {
         const getError = new ApiError(
             401,
             "Tournament Registration Error",
-            "Invalid tournament Id"
+            "Player already registered"
         );
         getError.sendResponse(res);
         throw getError;
@@ -159,20 +236,102 @@ const registerPlayer = asyncHandler(async (req, res) => {
     const tournament = await Tournament.findByIdAndUpdate(
         tournamentId,
         {
-            $push: { players: playerId },
+            $push: { players: getPlayer },
         },
-        { validateBeforeSave: true, new: true }
+        { validateBeforeSave: false, new: true }
     );
+
     if (!tournament) {
         const getError = new ApiError(
             500,
             "Tournament Update Error",
-            "Tournament not found"
+            "unable to register player to tournament"
         );
         getError.sendResponse(res);
         throw getError;
     }
     res.status(200).json(new ApiResponse(200, "Player registered", tournament));
+});
+
+// Controller to unregister a player from a tournament
+const unRegisterPlayer = asyncHandler(async (req, res) => {
+    const { tournamentId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+        const getError = new ApiError(
+            401,
+            "Invalid Tournament Id",
+            "Tournament Not Found"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
+    const getPlayer = req.user?._id;
+
+    if (!(tournamentId && getPlayer)) {
+        const getError = new ApiError(
+            401,
+            "Tournament Registration Error",
+            "fields must be provided"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
+
+    // check if player is already registered
+    const checkPlayer = await Tournament.findOne({
+        _id: tournamentId,
+        players: getPlayer,
+    });
+
+    if (!checkPlayer) {
+        const getError = new ApiError(
+            401,
+            "Tournament Registration Error",
+            "Player not registered"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
+
+    const tournament = await Tournament.findByIdAndUpdate(
+        tournamentId,
+        {
+            $pull: { players: getPlayer },
+        },
+        { validateBeforeSave: false, new: true }
+    );
+
+    if (!tournament) {
+        const getError = new ApiError(
+            500,
+            "Tournament Update Error",
+            "unable to unregister player from tournament"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
+    res.status(200).json(
+        new ApiResponse(200, "Player unregistered", tournament)
+    );
+});
+
+// Controller to get all players in a tournament
+const getTournamentPlayers = asyncHandler(async (req, res) => {
+    const { tournamentId } = req.params;
+    const tournament = await Tournament.findById(tournamentId);
+    if (!tournament) {
+        const getError = new ApiError(
+            500,
+            "Tournament Fetch Error",
+            "Tournament not found"
+        );
+        getError.sendResponse(res);
+        throw getError;
+    }
+    res.status(200).json(
+        new ApiResponse(200, "Tournament players found", tournament.players)
+    );
 });
 
 export {
@@ -182,4 +341,6 @@ export {
     getAllTournaments,
     updateTournament,
     registerPlayer,
+    unRegisterPlayer,
+    getTournamentPlayers,
 };

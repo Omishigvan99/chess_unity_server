@@ -6,10 +6,14 @@ import {
     deleteTournament,
     getAllTournaments,
     registerPlayer,
+    unRegisterPlayer,
+    getTournamentPlayers,
 } from "../controllers/tournament.controller.js";
+
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 
 const router = Router();
+//middleware to verify jwt token
 router.use(verifyJwt);
 
 router
@@ -17,8 +21,13 @@ router
     .get(getTournamentById)
     .delete(deleteTournament)
     .patch(updateTournament);
-router.route("/create").post(createTournament);
-router.route("/").get(getAllTournaments);
-router.route("/register-player/:tournamentId").post(registerPlayer);
+
+router.route("/").get(getAllTournaments).post(createTournament);
+
+router
+    .route("/:tournamentId/player")
+    .get(getTournamentPlayers)
+    .post(registerPlayer)
+    .delete(unRegisterPlayer);
 
 export default router;
