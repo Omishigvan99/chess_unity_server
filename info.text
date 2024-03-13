@@ -1,0 +1,69 @@
+1xx - Informational:
+
+100 Continue: The server confirms that the client should continue with its request.
+
+101 Switching Protocols: The server will switch protocols according to the client's request.
+
+2xx - Success:
+
+200 OK: The request was successful.
+
+201 Created: The request was successful, and a new resource was created.
+
+204 No Content: The server successfully processed the request, but there is no content to send.
+
+3xx - Redirection:
+
+301 Moved Permanently: The requested resource has been permanently moved to a new location.
+
+302 Found (or 307 Temporary Redirect): The requested resource has been temporarily moved to another location.
+
+4xx - Client Error:
+
+400 Bad Request: The server cannot understand the request.
+
+401 Unauthorized: Authentication is required, and the client has not provided valid credentials.
+
+403 Forbidden: The client does not have permission to access the requested resource.
+
+404 Not Found: The requested resource could not be found on the server.
+
+422 Unprocessable Entity: The server understands the content type of the request entity but was unable to process the contained instructions.
+
+5xx - Server Error:
+
+500 Internal Server Error: A generic error message returned when the server encounters an unexpected condition.
+
+503 Service Unavailable: The server is not ready to handle the request. Common causes are a server that is down for maintenance or is overloaded.
+
+Cloudinary response
+{
+  asset_id: '7d7444a123c98ef77a72dab95478da7b',
+  public_id: 'chessUnity/nldzsmbaoesqm6jpjvfq',
+  version: 1705946944,
+  version_id: 'b2fe90af631b6ae4f21176c4fe45d012',
+  signature: '1216cb25e60499f8a4b7134b0b58bca4641210c8',
+  width: 612,
+  height: 612,
+  format: 'png',
+  resource_type: 'image',
+  created_at: '2024-01-22T18:09:04Z',
+  tags: [],
+  bytes: 303777,
+  type: 'upload',
+  etag: '8c1c1e9de4218a2b9f81586ab1a9a7c7',
+  placeholder: false,
+  url: 'http://res.cloudinary.com/jay-dev/image/upload/v1705946944/chessUnity/nldzsmbaoesqm6jpjvfq.png',
+  secure_url: 'https://res.cloudinary.com/jay-dev/image/upload/v1705946944/chessUnity/nldzsmbaoesqm6jpjvfq.png',
+  folder: 'chessUnity',
+  original_filename: 'profile-pic',
+  api_key: '218511795898823'
+}
+
+delete response 
+
+
+cloudinary.v2.api
+  .delete_resources(['chessUnity/uwji4a6nx868c1vcque9'], 
+    { type: 'upload', resource_type: 'image' })
+  .then(console.log);
