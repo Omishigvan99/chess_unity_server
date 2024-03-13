@@ -28,24 +28,12 @@ const tournamentSchema = new mongoose.Schema({
     ],
     rounds: [
         {
-            matches: [
-                {
-                    player1: {
-                        type: mongoose.Schema.Types.ObjectId,
-                        ref: "Player",
-                    },
-                    player2: {
-                        type: mongoose.Schema.Types.ObjectId,
-                        ref: "Player",
-                    },
-                    winner: {
-                        type: mongoose.Schema.Types.ObjectId,
-                        ref: "Player",
-                    },
-                },
-            ],
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Game"
         },
     ],
-});
+},
+    { timestamps: true }
+);
 
 export const Tournament = mongoose.model("Tournament", tournamentSchema);

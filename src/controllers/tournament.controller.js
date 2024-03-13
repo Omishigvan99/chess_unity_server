@@ -5,13 +5,14 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 
 // Controller to create a new tournament
+
 const createTournament = asyncHandler(async (req, res) => {
     const { name, type } = req.body;
     if (!(name && type)) {
         const getError = new ApiError(
             401,
-            "Tournament Registration Error",
-            "fields must be provided"
+            "Fields Error",
+            "required fields must be provided"
         );
         getError.sendResponse(res);
         throw getError;
@@ -22,11 +23,12 @@ const createTournament = asyncHandler(async (req, res) => {
         const getError = new ApiError(
             401,
             "Tournament Registration Error",
-            "Unauthorized access"
+            "Unauthorized access! User need to login."
         );
         getError.sendResponse(res);
         throw getError;
     }
+
     // check if tournament already exists
     const checkTournament = await Tournament.findOne({
         $and: [{ name }, { type }],
@@ -51,15 +53,15 @@ const createTournament = asyncHandler(async (req, res) => {
     if (!tournament) {
         const getError = new ApiError(
             500,
-            "Tournament Registration Error",
-            "Tournament not created"
+            "Tournament Creation Error",
+            "Tournament is unable to create!!! \n try again later"
         );
         getError.sendResponse(res);
         throw getError;
     }
 
     res.status(201).json(
-        new ApiResponse(201, "Tournament created", tournament)
+        new ApiResponse(201, "Tournament created successfully", tournament)
     );
 });
 
@@ -86,25 +88,25 @@ const deleteTournament = asyncHandler(async (req, res) => {
     if (!tournament) {
         const getError = new ApiError(
             404,
-            "Tournament not found",
+            "Tournament Fetch Error",
             "Tournament not found"
         );
         getError.sendResponse(res);
         throw getError;
     }
     res.status(200).json(
-        new ApiResponse(200, "Tournament deleted", tournament)
+        new ApiResponse(200, "Tournament deleted successfully", tournament)
     );
 });
 
 // Controller to get all tournaments
 const getAllTournaments = asyncHandler(async (req, res) => {
-    const userId = req.user._id;
+    const userId = req.user?._id;
     if (!userId) {
         const getError = new ApiError(
             401,
-            "Tournament Fetch Error",
-            "Unauthorized access"
+            "Authentication Error",
+            "Unauthorized request! login or signup first "
         );
         getError.sendResponse(res);
         throw getError;
@@ -196,7 +198,7 @@ const updateTournament = asyncHandler(async (req, res) => {
 const registerPlayer = asyncHandler(async (req, res) => {
     const { tournamentId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+    if (! await mongoose.isValidObjectId(req.user._id)) {
         const getError = new ApiError(
             401,
             "Invalid Tournament Id",
@@ -257,21 +259,21 @@ const registerPlayer = asyncHandler(async (req, res) => {
 const unRegisterPlayer = asyncHandler(async (req, res) => {
     const { tournamentId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+    if (!mongoose.isValidObjectId(req.user?._id)) {
         const getError = new ApiError(
             401,
-            "Invalid Tournament Id",
-            "Tournament Not Found"
+            "Authentication Error",
+            "Unauthorized request! login or signup first "
         );
         getError.sendResponse(res);
         throw getError;
     }
     const getPlayer = req.user?._id;
 
-    if (!(tournamentId && getPlayer)) {
+    if (!(tournamentId)) {
         const getError = new ApiError(
             401,
-            "Tournament Registration Error",
+            "Fields Error",
             "fields must be provided"
         );
         getError.sendResponse(res);
