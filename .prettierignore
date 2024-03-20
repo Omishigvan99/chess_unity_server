@@ -1,0 +1,9 @@
+/.vscode
+/node_modules
+
+*.env
+.env
+.env.*
+package.json
+package-lock.json
+.gitignore
